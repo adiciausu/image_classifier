@@ -10,8 +10,8 @@ from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense
 from keras_preprocessing.image import ImageDataGenerator
 from keras.preprocessing.image import load_img, img_to_array
 
-batch_size = 128
-epochs = 15
+batch_size = 32
+epochs = 50
 height = 128
 width = 128
 
@@ -28,29 +28,37 @@ def create_model(classes_count):
         input_shape = (width, height, 3)
 
     model = Sequential()
-    model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=input_shape))
-    model.add(Conv2D(32, (3, 3), activation='relu'))
+    model.add(Conv2D(128, (3, 3), padding='same', activation='relu', input_shape=input_shape))
+    model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
 
-    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(Conv2D(256, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(256, (3, 3), padding='same', activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
 
-    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
 
     model.add(Flatten())
-    model.add(Dense(512, activation='relu'))
-    model.add(Dropout(0.5))
+    model.add(Dense(1024, activation='relu'))
+    model.add(Dropout(0.25))
     model.add(Dense(classes_count, activation='softmax'))
 
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
+    print(model.summary())
+
     return model
+
 
 def build_callbacks():
     checkpoint_path = "./data/checkpoints/image_classifier-epoch{epoch:03d}-" \
@@ -60,6 +68,7 @@ def build_callbacks():
     tb_callback = TensorBoard(os.path.join('data', 'logs'))
 
     return [checkpoint_callback, early_stopping, tb_callback]
+
 
 def predict():
     train_datagen = ImageDataGenerator()
@@ -72,7 +81,7 @@ def predict():
     model = create_model(len(train_generator.class_indices))
     model.load_weights(model_path)
 
-    test_datagen =  ImageDataGenerator(rescale=1. / 255)
+    test_datagen = ImageDataGenerator(rescale=1. / 255)
     test_generator = test_datagen.flow_from_directory(
         test_data_dir,
         target_size=(width, height),
@@ -80,7 +89,6 @@ def predict():
         class_mode="categorical"
     )
 
-    test_generator.reset()
     predictions = model.predict_generator(test_generator, steps=len(test_generator.filenames))
     predicted_class_indices = predictions.argmax(axis=1)
     label_map = (train_generator.class_indices)
@@ -92,6 +100,7 @@ def predict():
         plt.imshow(np.uint8(img))
         plt.title(predicted_class_indices[i])
         plt.show()
+
 
 def train():
     if not os.path.exists('data'):
@@ -125,6 +134,7 @@ def train():
     )
 
     model = create_model(len(train_generator.class_indices))
+    # model.load_weights(model_path)
 
     history = model.fit_generator(
         train_generator,
@@ -132,10 +142,11 @@ def train():
         epochs=epochs,
         validation_data=validation_generator,
         validation_steps=validation_generator.n // batch_size,
-        callbacks = build_callbacks()
+        callbacks=build_callbacks()
     )
 
     model.save_weights(model_path)
+
 
 train()
 predict()
