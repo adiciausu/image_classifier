@@ -12,7 +12,7 @@ from keras_preprocessing.image import ImageDataGenerator
 from keras.preprocessing.image import load_img, img_to_array
 
 batch_size = 32
-epochs = 50
+epochs = 10
 height = 128
 width = 128
 
