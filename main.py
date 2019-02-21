@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import numpy as np
 import tensorflow
@@ -134,7 +135,9 @@ def train():
     )
 
     model = create_model(len(train_generator.class_indices))
-    # model.load_weights(model_path)
+
+    if (Path(model_path).exists()):
+        model.load_weights(model_path)
 
     history = model.fit_generator(
         train_generator,
