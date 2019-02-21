@@ -1,19 +1,23 @@
 import os
 
+import numpy as np
 import tensorflow
+import matplotlib.pyplot as plt
 from keras import backend as K
 from keras import Sequential
 from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense
 from keras_preprocessing.image import ImageDataGenerator
+from keras.preprocessing.image import load_img, img_to_array
 
 batch_size = 128
-epochs = 30
-height = int(128 * 1.5)
+epochs = 15
+height = 128
 width = 128
 
 train_data_dir = "input/train"
 validation_data_dir = "input/validation"
+test_data_dir = "input/test"
 model_path = "car_classifier_model.h5"
 
 
@@ -55,13 +59,8 @@ def build_callbacks():
 
     return [checkpoint_callback, early_stopping, tb_callback]
 
-
 def predict():
-    train_datagen = ImageDataGenerator(
-        rescale=1. / 255,
-        shear_range=0.2,
-        zoom_range=0.2,
-        horizontal_flip=True)
+    train_datagen = ImageDataGenerator()
     train_generator = train_datagen.flow_from_directory(
         train_data_dir,
         target_size=(width, height),
@@ -71,6 +70,27 @@ def predict():
     model = create_model(len(train_generator.class_indices))
     model.load_weights(model_path)
 
+    test_datagen =  ImageDataGenerator(rescale=1. / 255)
+    test_generator = test_datagen.flow_from_directory(
+        test_data_dir,
+        target_size=(width, height),
+        batch_size=1,
+        class_mode="categorical"
+    )
+
+    predictions = model.predict_generator(test_generator, steps=len(test_generator.filenames))
+    predictions = predictions.argmax(axis=-1)
+
+    label_map = (train_generator.class_indices)
+    label_map = dict((v, k) for k, v in label_map.items())  # flip k,v
+    predictions = [label_map[k] for k in predictions]
+
+    for i in range(len(test_generator.filenames)):
+        img = load_img(path=os.path.join("input", "test", test_generator.filenames[i]))
+        img = img_to_array(img)
+        plt.imshow(np.uint8(img))
+        plt.title(predictions[i])
+        plt.show()
 
 def train():
     if not os.path.exists('data'):
@@ -79,7 +99,6 @@ def train():
         os.mkdir(os.path.join('data', 'logs'))
     if not os.path.exists(os.path.join('data', 'checkpoints')):
         os.mkdir(os.path.join('data', 'checkpoints'))
-
 
     config = tensorflow.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -116,7 +135,6 @@ def train():
         callbacks = build_callbacks()
     )
 
-    model.evaluate_generator(generator=validation_generator)
     model.save_weights(model_path)
 
 
