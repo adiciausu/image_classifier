@@ -48,6 +48,8 @@ def create_model(classes_count):
     model.add(Dropout(0.5))
     model.add(Dense(classes_count, activation='softmax'))
 
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
     return model
 
 def build_callbacks():
@@ -78,18 +80,17 @@ def predict():
         class_mode="categorical"
     )
 
+    test_generator.reset()
     predictions = model.predict_generator(test_generator, steps=len(test_generator.filenames))
-    predictions = predictions.argmax(axis=-1)
-
+    predicted_class_indices = predictions.argmax(axis=1)
     label_map = (train_generator.class_indices)
     label_map = dict((v, k) for k, v in label_map.items())  # flip k,v
-    predictions = [label_map[k] for k in predictions]
-
+    predicted_class_indices = [label_map[k] for k in predicted_class_indices]
     for i in range(len(test_generator.filenames)):
         img = load_img(path=os.path.join("input", "test", test_generator.filenames[i]))
         img = img_to_array(img)
         plt.imshow(np.uint8(img))
-        plt.title(predictions[i])
+        plt.title(predicted_class_indices[i])
         plt.show()
 
 def train():
@@ -124,7 +125,6 @@ def train():
     )
 
     model = create_model(len(train_generator.class_indices))
-    model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
     history = model.fit_generator(
         train_generator,
@@ -136,7 +136,6 @@ def train():
     )
 
     model.save_weights(model_path)
-
 
 train()
 predict()
