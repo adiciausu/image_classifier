@@ -13,8 +13,8 @@ from keras_preprocessing.image import ImageDataGenerator
 
 batch_size = 32
 epochs = 5
-height = 256
-width = 256
+height = 128
+width = 128
 
 train_data_dir = "input/train"
 validation_data_dir = "input/validation"
