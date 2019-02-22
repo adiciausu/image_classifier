@@ -1,20 +1,20 @@
 import os
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow
-import matplotlib.pyplot as plt
-from keras import backend as K
-from keras import Sequential
+from keras import backend as K, Model, Sequential
+from keras.applications import VGG16
 from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
-from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense
-from keras_preprocessing.image import ImageDataGenerator
+from keras.layers import Dropout, Flatten, Dense
 from keras.preprocessing.image import load_img, img_to_array
+from keras_preprocessing.image import ImageDataGenerator
 
 batch_size = 32
-epochs = 10
-height = 128
-width = 128
+epochs = 5
+height = 256
+width = 256
 
 train_data_dir = "input/train"
 validation_data_dir = "input/validation"
@@ -23,39 +23,26 @@ model_path = "car_classifier_model.h5"
 
 
 def create_model(classes_count):
-    if K.image_data_format() == 'channels_first':
-        input_shape = (3, width, height)
-    else:
-        input_shape = (width, height, 3)
+    base_model = VGG16(weights="imagenet", include_top=False, input_shape=(width, height, 3))
 
-    model = Sequential()
-    model.add(Conv2D(128, (3, 3), padding='same', activation='relu', input_shape=input_shape))
-    model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
+    # Freeze the layers which you don't want to train. Here I am freezing the first 5 layers.
+    for layer in base_model.layers[:15]:
+        layer.trainable = False
 
-    model.add(Conv2D(256, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(256, (3, 3), padding='same', activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
+    # build a classifier model to put on top of the convolutional model
+    top_model = Sequential()
+    top_model.add(Flatten())
+    top_model.add(Dense(1024, activation='relu'))
+    top_model.add(Dropout(0.3))
+    top_model.add(Dense(1024, activation='relu'))
+    top_model.add(Dropout(0.5))
+    top_model.add(Dense(classes_count, activation="softmax"))
 
-    model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
-
-    model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
-
-    model.add(Flatten())
-    model.add(Dense(1024, activation='relu'))
-    model.add(Dropout(0.25))
-    model.add(Dense(classes_count, activation='softmax'))
-
+    model = Model(input=base_model.input, output=top_model(base_model.output))
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
+    print(base_model.summary())
+    print(top_model.summary())
     print(model.summary())
 
     return model
@@ -137,6 +124,7 @@ def train():
     model = create_model(len(train_generator.class_indices))
 
     if (Path(model_path).exists()):
+        print("Loaded previous saved model")
         model.load_weights(model_path)
 
     history = model.fit_generator(
