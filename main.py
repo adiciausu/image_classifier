@@ -12,7 +12,7 @@ from keras.preprocessing.image import load_img, img_to_array
 from keras_preprocessing.image import ImageDataGenerator
 
 batch_size = 32
-epochs = 5
+epochs = 30
 height = 128
 width = 128
 
@@ -26,7 +26,7 @@ def create_model(classes_count):
     base_model = VGG16(weights="imagenet", include_top=False, input_shape=(width, height, 3))
 
     # Freeze the layers which you don't want to train. Here I am freezing the first 5 layers.
-    for layer in base_model.layers[:15]:
+    for layer in base_model.layers:
         layer.trainable = False
 
     # build a classifier model to put on top of the convolutional model
@@ -34,8 +34,6 @@ def create_model(classes_count):
     top_model.add(Flatten())
     top_model.add(Dense(1024, activation='relu'))
     top_model.add(Dropout(0.3))
-    top_model.add(Dense(1024, activation='relu'))
-    top_model.add(Dropout(0.5))
     top_model.add(Dense(classes_count, activation="softmax"))
 
     model = Model(input=base_model.input, output=top_model(base_model.output))
