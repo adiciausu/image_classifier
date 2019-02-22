@@ -19,7 +19,7 @@ width = 128
 train_data_dir = "input/train"
 validation_data_dir = "input/validation"
 test_data_dir = "input/test"
-model_path = "car_classifier_model.h5"
+model_path = "data/car_classifier_model.h5"
 
 
 def create_model(classes_count):
