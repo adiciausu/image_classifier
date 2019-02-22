@@ -12,7 +12,7 @@ from keras.preprocessing.image import load_img, img_to_array
 from keras_preprocessing.image import ImageDataGenerator
 
 batch_size = 32
-epochs = 30
+epochs = 10
 height = 128
 width = 128
 
@@ -36,6 +36,7 @@ def create_model(classes_count):
     top_model.add(Dropout(0.3))
     top_model.add(Dense(classes_count, activation="softmax"))
 
+    #sgd = SGD(lr=1e-3, decay=1e-6, momentum=0.9, nesterov=True)
     model = Model(input=base_model.input, output=top_model(base_model.output))
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
@@ -49,7 +50,7 @@ def create_model(classes_count):
 def build_callbacks():
     checkpoint_path = "./data/checkpoints/image_classifier-epoch{epoch:03d}-" \
                       "loss{loss:.4f}-acc{acc:.4f}-val_loss{val_loss:.4f}-val_acc{val_acc:.4f}"
-    checkpoint_callback = ModelCheckpoint(checkpoint_path, monitor='val_acc', save_best_only=True)
+    checkpoint_callback = ModelCheckpoint(checkpoint_path, monitor='val_acc', save_best_only=True, verbose=1)
     early_stopping = EarlyStopping(monitor='val_acc', patience=100)
     tb_callback = TensorBoard(os.path.join('data', 'logs'))
 
@@ -133,9 +134,6 @@ def train():
         validation_steps=validation_generator.n // batch_size,
         callbacks=build_callbacks()
     )
-
-    model.save_weights(model_path)
-
 
 train()
 predict()
