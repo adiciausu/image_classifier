@@ -97,7 +97,6 @@ def train():
 
     config = tensorflow.ConfigProto()
     config.gpu_options.allow_growth = True
-    config.gpu_options.per_process_gpu_memory_fraction = 0.8
 
     K.set_session(tensorflow.Session(config=config))
 
