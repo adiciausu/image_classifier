@@ -25,8 +25,7 @@ model_path = "data/car_classifier_model.h5"
 def create_model(classes_count):
     base_model = VGG16(weights="imagenet", include_top=False, input_shape=(width, height, 3))
 
-    # Freeze the layers which you don't want to train. Here I am freezing the first 5 layers.
-    for layer in base_model.layers:
+    for layer in base_model.layers[:15]:
         layer.trainable = False
 
     # build a classifier model to put on top of the convolutional model
