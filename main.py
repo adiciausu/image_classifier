@@ -136,3 +136,4 @@ def train():
 
 train()
 predict()
+#    C:\Dev\test\image_classifier\venv\Scripts\python.exe c:\ProgramData\Anaconda3\Scripts\tensorboard.exe
