@@ -12,15 +12,14 @@ from keras.preprocessing.image import load_img, img_to_array
 from keras_preprocessing.image import ImageDataGenerator
 
 batch_size = 32
-epochs = 10
-height = 128
-width = 128
+epochs = 50
+height = 224
+width = 224
 
 train_data_dir = "input/train"
 validation_data_dir = "input/validation"
 test_data_dir = "input/test"
 model_path = "data/car_classifier_model.h5"
-
 
 def create_model(classes_count):
     base_model = VGG16(weights="imagenet", include_top=False, input_shape=(width, height, 3))
@@ -98,6 +97,8 @@ def train():
 
     config = tensorflow.ConfigProto()
     config.gpu_options.allow_growth = True
+    config.gpu_options.per_process_gpu_memory_fraction = 0.8
+
     K.set_session(tensorflow.Session(config=config))
 
     train_datagen = ImageDataGenerator(
@@ -136,4 +137,4 @@ def train():
 
 train()
 predict()
-#    C:\Dev\test\image_classifier\venv\Scripts\python.exe c:\ProgramData\Anaconda3\Scripts\tensorboard.exe
+#    C:\Dev\test\image_classifier\venv\Scripts\python.exe c:\ProgramData\Anaconda3\Scripts\tensorboard.exe --logdir=data/logs --host=127.0.0.1
